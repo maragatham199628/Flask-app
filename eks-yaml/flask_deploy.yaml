@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maragatham-frontend
+  labels:
+    app: maragatham-frontend
+  namespace: batch2
+spec:
+  selector:
+    matchLabels:
+      app: maragatham-frontend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: maragatham-frontend
+    spec:
+      containers:
+      - name: maragatham-frontend
+        image: 915551958967.dkr.ecr.ap-south-1.amazonaws.com/flask_container:Maragatham 
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000

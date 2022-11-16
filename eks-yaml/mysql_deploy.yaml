@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maragatham-backend
+  labels:
+    app: maragatham-backend
+  namespace: batch2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maragatham-backend
+  template:
+    metadata:
+      labels:
+        app: maragatham-backend
+    spec:
+      containers:
+      - name: maragatham-backend
+        image: 915551958967.dkr.ecr.ap-south-1.amazonaws.com/mysql_container:Maragatham
+        imagePullPolicy: Always
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+            

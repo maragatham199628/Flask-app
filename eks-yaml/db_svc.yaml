@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels: 
+    app: maragatham-backend
+  name: maragatham-backend
+  namespace: batch2
+spec:
+  type: ClusterIP
+  selector:
+    app: maragatham-backend
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+
