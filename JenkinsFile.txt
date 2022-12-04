@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+    stages {
+        stage('Git clone') {
+            steps {
+                sh (script: """
+                    git clone https://github.com/maragatham199628/Flask-app.git
+                """, returnStdout: true)
+            }
+        }
+        stage('Build the image') {
+            steps {
+                sh script: """
+                    cd $WORKSPACE/Flask-app
+                    docker build . -t flask_container:${BUILD_NUMBER}
+                    docker build --build-arg root_pw=root . -t mysql_container:${BUILD_NUMBER}
+                    """
+                }
+            }
+        stage('Logging into AWS ECR') {
+            steps {
+                withAWS(credentials: 'myrepo-aws-pavi', region: 'us-west-1') {
+                sh 'aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 254489724911.dkr.ecr.us-west-1.amazonaws.com'
+                }
+            } 
+        } 
+        stage('docker Flask push') {
+            steps{
+                sh script: """
+                    docker tag flask_container:${BUILD_NUMBER} 254489724911.dkr.ecr.us-west-1.amazonaws.com/myrepo:frontend-${BUILD_NUMBER} 
+                    docker push 254489724911.dkr.ecr.us-west-1.amazonaws.com/myrepo:frontend-${BUILD_NUMBER}
+                    """
+                }
+            }
+        stage('docker MYSQL push') {
+            steps{
+                sh script: """
+                    docker tag mysql_container:${BUILD_NUMBER} 254489724911.dkr.ecr.us-west-1.amazonaws.com/sqlimage:backend-${BUILD_NUMBER} 
+                    docker push 254489724911.dkr.ecr.us-west-1.amazonaws.com/sqlimage:backend-${BUILD_NUMBER}
+                    """
+                }
+            }
+        stage('deploy') {
+            steps{
+                withAWS(credentials: 'myrepo-aws-pavi', region: 'us-west-1') {
+                sh 'aws ecr get-login-password --region us-west-1 | docker login --username AWS --password-stdin 254489724911.dkr.ecr.us-west-1.amazonaws.com'
+                }
+                withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'kubeconfig', namespace: '', serverUrl: '') {
+                sh script: '''
+                cd $WORKSPACE/Flask-app/eks-yaml
+                kubectl create -f flask_deploy.yaml
+                kubectl create -f app_svc.yaml
+                '''
+                }
+               }
+            }
+        }
+    }
